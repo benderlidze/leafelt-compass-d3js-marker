@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+
+<!-- Load d3.js and the geo projection plugin -->
+<script src="https://d3js.org/d3.v4.js"></script>
+<script src="https://d3js.org/d3.v6.min.js"></script>
+
+<!-- Load Leaflet -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.4/dist/leaflet.css"
+    integrity="sha512-puBpdR0798OZvTTbP4A8Ix/l+A4dHDD0DGqYW6RQ+9jxkRFclaxxQb/SJAWZfWAkuyeQUytO7+7N4QKrDh+drA=="
+    crossorigin="" />
+<script src="https://unpkg.com/leaflet@1.3.4/dist/leaflet.js"
+    integrity="sha512-nMMmRyTVoLYqjP9hrbed9S+FzjZHW5gY1TWCHA5ckwXZBadntCNs8kEqAWdrb9O7rxbCaA4lKTIWjDXZxflOcA=="
+    crossorigin=""></script>
+
+<!-- Create an element where the map will take place -->
+<div id="mapid"></div>
+
+<style>
+    #mapid {
+        height: 100vh;
+    }
+
+    .compassText {
+        text-align: center;
+        font-size: 30px;
+        text-anchor: middle;
+    }
+
+    .ringring {
+        border: 5px solid #E7E7E7;
+        height: 24px;
+        width: 24px;
+        -webkit-animation: pulsate 2s ease-out;
+        -webkit-animation-iteration-count: infinite;
+        opacity: 0.0;
+    }
+
+    @-webkit-keyframes pulsate {
+        0% {
+            /* -webkit-transform: scale(0.1, 0.1); */
+            opacity: 0.0;
+        }
+
+        50% {
+            opacity: 2.0;
+        }
+
+        100% {
+            /* -webkit-transform: scale(1.6, 1.6); */
+            opacity: 0.0;
+        }
+    }
+</style>
+
+<script>
+    // mapid is the id of the div where the map will appear
+    var map = L.map('mapid').setView({ lat: 45.31352900692261, lng: 7.712402343750001 }, 7);
+    mapLink =
+        '<a href="http://www.esri.com/">Esri</a>';
+    wholink =
+        'i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community';
+    L.tileLayer(
+        'http://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        attribution: '&copy; ' + mapLink + ', ' + wholink,
+        maxZoom: 18,
+    }).addTo(map);
+
+    // Add a svg layer to the map
+    L.svg().addTo(map);
+
+
+    // Create data for circles:
+    var markers = { long: 7.26, lat: 43.71, radius: 120 };
+
+    drawCompass({ long: 7.26, lat: 43.71, radius: 120 })
+
+    function drawCompass(data) {
+
+        const compasColor = '#ccc'
+        const { x, y } = map.latLngToLayerPoint([data.lat, data.long])
+        const r = data.radius
+
+        console.log('x,y,r', x, y, r);
+
+
+        // Select the svg area and add circles:
+        svg = d3.select("#mapid").select("svg")
+        svg.selectAll("*").remove();
+
+
+        //compas lines 
+        var lineGraph = svg
+            .append("path")
+            .attr("class", "compassLines")
+            .attr("d", d3.line()([
+                [x, y - r],
+                [x, y + r],
+                [x, y],
+                [x + r, y],
+                [x - r, y],
+            ])
+            )
+            .attr("stroke", compasColor)
+            .attr("stroke-width", 1)
+            .attr("fill", "none");
+
+        //North
+        var text = svg
+
+        text
+            .append("text")
+            .attr("y", y - r - 5)
+            .attr("x", x)
+            .attr("class", "compassText")
+            .text("N")
+            .style('fill', compasColor)
+
+        //South
+        text
+
+            .append("text")
+            .attr("y", y + r + 25)
+            .attr("x", x)
+            .attr("class", "compassText")
+            .text("S")
+            .style('fill', compasColor)
+
+        //West
+        text
+            .append("text")
+            .attr("y", y + 10)
+            .attr("x", x - r - 20)
+            .attr("class", "compassText")
+            .text("W")
+            .style('fill', compasColor)
+
+        //East
+        text
+            .append("text")
+            .attr("y", y + 10)
+            .attr("x", x + r + 20)
+            .attr("class", "compassText")
+            .text("E")
+            .style('fill', compasColor)
+
+
+
+        //compas center circle 
+        svg
+            .append("circle")
+            .attr("class", "ringring")
+            .attr("cx", x)
+            .attr("cy", y)
+            .attr("r", 5)
+            .style("fill", "white")
+            .attr("stroke", compasColor)
+            .attr("stroke-width", 1)
+            .attr("fill-opacity", 1)
+
+
+        //compas circle 
+        svg
+            .append("circle")
+            .attr("cx", x)
+            .attr("cy", y)
+            .attr("r", r)
+            .style("fill", "red")
+            .attr("stroke", compasColor)
+            .attr("stroke-width", 3)
+            .attr("fill-opacity", .0)
+
+
+        drawArrow("#84f3fe", getRandomInt(0,360), "some text 1", "127 123");
+        drawArrow("#ffd133", getRandomInt(0,360), "some text 2", "aa123");
+        drawArrow("red", getRandomInt(0,360), "some text 3", "aa123");
+
+        function drawArrow(color, angle, text_inner, text_outer) {
+
+            const outer_id = "outer_" + color + Date.now(); //id for line text 
+            const inner_id = "inner_" + color + Date.now(); //id for line text 
+            const arrowGroup = svg.append("g").attr("class", "arrowGroup");
+            const offset = 30;
+
+            //line radius
+            arrowGroup
+
+                .append("path")
+                .attr("id", inner_id) //normall
+                .attr("class", "compassLines")
+                .attr("d", d3.line()([
+                    [x, y - r],
+                    [x, y],
+                ])
+                )
+                .attr("stroke", compasColor)
+                .attr("stroke-width", 1)
+                .attr("fill", "none");
+
+            // line and background for text outside the compass circle 
+            arrowGroup
+                .append("path")
+                .attr("id", outer_id) //normall
+                .style("stroke", "black")
+                .attr("stroke-width", 20)
+                .attr("stroke-opacity", 0.5)
+                .attr("fill-opacity", 0.7)
+                .style("stroke-linecap", "round")
+                .attr("d", d3.line()([
+                    [x, y - r],
+                    [x, y - r - 30],
+                ])
+                )
+
+            //compas main arrow path 
+            arrowGroup
+                .append("path")
+                .attr("class", "compassLines")
+                .attr("d", () => {
+                    const x1 = x
+                    const y1 = y - offset
+                    return d3.line()([
+                        [x1, y1],
+                        [x1 - 10, y1 - 10],
+                        [x1 - 10, y1 - r + offset],
+                        [x1 + 10, y1 - r + offset],
+                        [x1 + 10, y1 - 10],
+                        [x1, y1],
+                    ])
+                })
+                .attr("stroke", 'black')
+                .attr("stroke-opacity", 0.6)
+                .attr("stroke-width", 1)
+                .attr("fill", color)
+
+            if (angle < 180) {
+                arrowGroup
+                    .append("text")
+                    .style("font-size", 15)
+                    .style("fill", "white")
+                    .attr("dy", 5)
+                    .append("textPath")
+                    .attr("xlink:href", "#" + outer_id)
+                    .style("text-anchor", "start")
+                    .attr("startOffset", "10%")
+                    .text(text_outer)
+                    .style('fill', "white")
+                arrowGroup
+                    .append("text")
+                    .style("font-size", 15)
+                    .style("fill", "#000")
+                    .attr("dy", 5)
+                    .attr("id", "rotate" + inner_id) //normall
+                    .attr('transform', `rotate(180 ${x} ${y - r / 2})`) //rotate text if angle <180 
+                    .append("textPath")
+                    .attr("xlink:href", "#" + inner_id)
+                    .style("text-anchor", "end")
+                    .attr("startOffset", "97%")
+                    .text(text_inner)
+                    .style('fill', "black")
+            } else {
+                arrowGroup
+                    .append("text")
+                    .style("font-size", 15)
+                    .style("fill", "white")
+                    .attr("dy", 5)
+                    .attr('transform', `rotate(180 ${x} ${y - r - offset / 2})`) //rotate text if angle <180 
+                    .append("textPath")
+                    .attr("xlink:href", "#" + outer_id)
+                    .style("text-anchor", "end")
+                    .attr("startOffset", "100%")
+                    .text(text_outer)
+                    .style('fill', "white")
+                arrowGroup
+                    .append("text")
+                    .style("font-size", 15)
+                    .style("fill", "#000")
+                    .attr("dy", 5)
+                    .attr("id", "rotate" + inner_id) //normall
+                    .append("textPath")
+                    .attr("xlink:href", "#" + inner_id)
+                    .style("text-anchor", "start")
+                    .attr("startOffset", "5%")
+                    .text(text_inner)
+                    .style('fill', "black")
+            }
+            arrowGroup.attr('transform', `rotate(${angle} ${x} ${y})`)
+        }
+    }
+
+    // Function that update circle position if something change
+    function update() {
+        drawCompass(markers)
+    }
+
+
+    function degrees_to_radians(degrees) {
+        var pi = Math.PI;
+        return degrees * (pi / 180);
+    }
+
+    // If the user change the map (zoom or drag), I update circle position:
+    map.on("zoomend", update)
+
+    function getRandomInt(min, max) {
+        min = Math.ceil(min);
+        max = Math.floor(max);
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+</script>

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+    <script src="https://unpkg.com/geometric@1.0.0/build/geometric.min.js"></script>
+</head>
+
+<body>
+    <svg width="380" height="380"></svg>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function (event) {
+            drawCompass({
+                radius: 120
+            })
+        });
+
+
+        function drawCompass(data) {
+
+            const compasColor = '#ccc'
+            // const { x, y } = map.latLngToLayerPoint([data.lat, data.long])
+            const x = y = 190;
+            const r = data.radius
+
+            svg = d3.select("svg")
+            svg
+                .append("circle")
+                .attr("cx", x)
+                .attr("cy", y)
+                .attr("r", r)
+                .style("fill", "red")
+                .attr("stroke", compasColor)
+                .attr("stroke-width", 3)
+                .attr("fill-opacity", .0)
+
+            drawArrow("steelblue", 0, "0", "");
+            drawArrow("red", 45, "0", "");
+            drawArrow("blue", 15, "0", "");
+
+            function drawArrow(color, angle, text_inner, text_outer) {
+
+                const outer_id = "outer_" + color + Date.now(); //id for line text 
+                const inner_id = "inner"
+                const arrowGroup = svg.append("g").attr("class", "arrowGroup");
+                const offset = 30;
+
+                //line radius
+                arrowGroup
+                    .append("path")
+                    .attr("id", inner_id) //normall
+                    .attr("class", "compassLines")
+                    .attr("d", d3.line()([
+                        [x, y - r],
+                        [x, y],
+                    ]))
+                    .attr("stroke", compasColor)
+                    .attr("stroke-width", 1)
+                    .attr("fill", "none");
+
+
+                // line and background for text outside the compass circle 
+                const dragger = arrowGroup
+                    .append("path")
+                    .attr("id", outer_id) //normall
+                    .style("stroke", "black")
+                    .attr("stroke-width", 20)
+                    .attr("stroke-opacity", 0.5)
+                    .attr("fill-opacity", 0.7)
+                    .style("stroke-linecap", "round")
+                    .attr("d", d3.line()([
+                        [x, y - r],
+                        [x, y - r - 30]
+                    ]))
+                    .call(
+                        d3.drag()
+                            .container(function () { return this.parentNode.parentNode; })
+                            .on("drag", dragged)
+                    )
+
+                d3.select("svg").on("touchstart", dragged);
+                d3.select("svg").on("touchmove", dragged);
+
+                function dragged(event) {
+                    var angle123 = geometric.lineAngle([
+                        [x, y], [event.x, event.y]
+                    ]);
+                    const tempAngle = Math.ceil(angle123 + 90)
+                    const displayAngel = tempAngle < 0 ? 360 + tempAngle : tempAngle
+                    const arrow = this.parentNode;
+                    d3.select(arrow)
+                        .attr('transform', `rotate(${angle123 + 90} ${x} ${y})`)
+                }
+
+
+                return arrowGroup
+            }
+        }
+
+    </script>
+</body>
